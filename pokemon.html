@@ -70,101 +70,102 @@
 
     <script>
         const btn = document.getElementById("btn");
-        const loader = document.getElementById("loader");
-        const error = document.getElementById("error");
-        const input = document.getElementById("input"); // ← исправлено
+const loader = document.getElementById("loader");
+const error = document.getElementById("error")
+const input = document.getElementById("input")
 
-        async function handleSearch() {
-            loader.style.display = "block";
-            error.textContent = "";
-            const list = document.getElementById("list"); // ← moved сюда
-            list.innerHTML = "";
 
-            const id = input.value.trim();
-            if (!id) {
-                error.textContent = "Введите id покемона!";
-                loader.style.display = "none";
-                return;
-            }
-            try {
-                const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`);
-                if (!res.ok) {
-                    error.textContent = "Покемон не найден!";
-                    loader.style.display = "none";
-                    return;
-                }
-                const data = await res.json();
+async function handleSearch() {
+    loader.style.display = "block";
+    error.textContent = "";
+    const list = document.getElementById("list");
+    list.innerHTML = "";
 
-                const li = document.createElement("li");
-                li.innerHTML = `
-                    <img src="${data.sprites.front_default}" alt="${data.name}">
-                    <h2>${data.name}</h2>
-                    <p>ID: ${id}</p>
-                    <p>Типы: ${data.types[0].type.name}</p>
-                    <p>Рост: ${data.height}</p>
-                    <p>Вес: ${data.weight}</p>
-                `;
-                li.style.listStyle = "none";
-                list.appendChild(li);
-
-            } catch (e) {
-                console.error(e);
-                error.textContent = "Ошибка загрузки данных";
-            } finally {
-                loader.style.display = "none";
-            }
+    const id = document.getElementById("input").value.trim();
+    if (!id) {
+        error.textContent = "Введите id покемона!";
+        loader.style.display = "none";
+        list.innerHTML = "";
+        return;
+    }
+    try {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`);
+        if (!res.ok) {
+            error.textContent = "Покемон не найден!";
+            loader.style.display = "none";
+            return;
         }
+        const data = await res.json();
+        list.innerHTML = "";
 
-        btn.addEventListener("click", handleSearch);
-        input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                handleSearch();
-            }
-        });
+        const li = document.createElement("li");
+        li.innerHTML = `
+      <img src="${data.sprites.front_default}" alt="${data.name}">
+      <h2>${data.name}</h2>
+      <p>ID: ${id}</p>
+      <p>Типы: ${data.types[0].type.name}</p>
+      <p>Рост: ${data.height}</p>
+      <p>Вес: ${data.weight}</p>
+    `;
+        li.style.listStyle = "none";
+        list.appendChild(li);
 
-        async function pokemonLimit(limit = 20) {
-            const res = await fetch("https://pokeapi.co/api/v2/pokemon/");
-            const data = await res.json();
-            return data.results;
+    } catch (e) {
+        console.error(e);
+        error.textContent = "Ошибка загрузки данных";
+        loader.style.display = "none";
+        return;
+    } finally {
+        loader.style.display = "none";
+    }
+}
+btn.addEventListener("click", handleSearch);
+input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearch();
+    }
+});
+async function pokemonLimit(limit = 20) {
+    const res = await fetch("https://pokeapi.co/api/v2/pokemon/");
+    const data = await res.json();
+    return data.results;
+};
+async function renderPokemons() {
+    const list = document.getElementById("list");
+    const pokemons = await pokemonLimit(20);
+
+    pokemons.forEach(p => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.textContent = p.name;
+        link.className = "link"
+        link.href = "#";
+        link.onclick = () => {
+            showInfo(p.url, link);
+            link.onclick = null;
         }
+        li.appendChild(link)
+        list.appendChild(li);
+    });
+};
+async function showInfo(url, link) {
+    const res = await fetch(url);
+    const data = await res.json();
 
-        async function renderPokemons() {
-            const list = document.getElementById("list");
-            const pokemons = await pokemonLimit(20);
+    const info = document.createElement("div")
+    info.innerHTML = `
+    <img src="${data.sprites.front_default}" alt="${data.name}">
+    <h2>${data.name}</h2>
+    <p>Типы: ${data.types.map(t => t.type.name).join(", ")}</p>
+    <p>Рост: ${data.height}</p>
+    <p>Вес: ${data.weight}</p>
+  `;
+    info.className = "info"
+    link.appendChild(info);
+};
+renderPokemons();
 
-            pokemons.forEach(p => {
-                const li = document.createElement("li");
-                const link = document.createElement("a");
-                link.textContent = p.name;
-                link.className = "link";
-                link.href = "#";
-                link.onclick = () => {
-                    showInfo(p.url, link);
-                    link.onclick = null;
-                }
-                li.appendChild(link);
-                list.appendChild(li);
-            });
-        }
-
-        async function showInfo(url, link) {
-            const res = await fetch(url);
-            const data = await res.json();
-
-            const info = document.createElement("div");
-            info.innerHTML = `
-                <img src="${data.sprites.front_default}" alt="${data.name}">
-                <h2>${data.name}</h2>
-                <p>Типы: ${data.types.map(t => t.type.name).join(", ")}</p>
-                <p>Рост: ${data.height}</p>
-                <p>Вес: ${data.weight}</p>
-            `;
-            info.className = "info";
-            link.appendChild(info);
-        }
-
-        renderPokemons();
     </script>
 </body>
 
